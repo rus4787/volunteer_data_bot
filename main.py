@@ -4,6 +4,8 @@ from telegram.ext import Application, CommandHandler, CallbackContext, CallbackQ
 from database import add_user
 from telegram.error import TelegramError
 import os
+import asyncio
+from backup_to_google_sheets import backup_to_google_sheets
 
 async def error_handler(update: object, context: CallbackContext) -> None:
     print(f"Произошла ошибка: {context.error}")
@@ -217,9 +219,19 @@ async def handle_user_input(update: Update, context: CallbackContext):
     elif state == 'enter_additional_data':
         await handle_additional_data(update, context)
 
-        
-# Создаём бота
-def main():
+
+async def periodic_backup():
+    while True:
+        print("Запуск бэкапа...")
+        try:
+            await backup_to_google_sheets()  # Запуск бэкапа
+            print("Бэкап успешно завершён.")
+        except Exception as e:
+            print(f"Ошибка во время бэкапа: {e}")
+        await asyncio.sleep(3600)  # Ожидание 1 час (3600 секунд)
+
+
+async def run_bot():
     app = Application.builder().token(TOKEN).build()
 
     # Добавляем обработчики команд
@@ -229,14 +241,19 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_user_input))
     app.add_error_handler(error_handler)
 
-    print("Current working directory:", os.getcwd())
-    print("Contents:", os.listdir("."))
-    
-    # Запускаем бота
     print("Бот запущен!")
-    app.run_polling()
+    await app.run_polling()
+
+
+async def main():
+    bot_task = asyncio.create_task(run_bot())  # Запуск бота
+    backup_task = asyncio.create_task(periodic_backup())  # Запуск задачи бэкапа
+    await asyncio.gather(bot_task, backup_task)  # Выполнение задач одновременно
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
 
+if __name__ == "__main__":
+    asyncio.run(main())
 
