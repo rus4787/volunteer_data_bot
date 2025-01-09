@@ -3,15 +3,24 @@ from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, CallbackContext, CallbackQueryHandler, MessageHandler, filters
 from database import add_user
 from telegram.error import TelegramError
+import os
 
 async def error_handler(update: object, context: CallbackContext) -> None:
     print(f"Произошла ошибка: {context.error}")
 
 # Чтение токена из файла secrets.toml
 def load_token():
-    with open("secrets.toml", "rb") as f:
-        secrets = tomli.load(f)
-    return secrets["secret_token"]["TOKEN_tell"]
+    try:
+        # Попытка загрузить токен из файла secrets.toml
+        with open("secrets.toml", "rb") as f:
+            secrets = tomli.load(f)
+            return secrets["secret_token"]["TOKEN_tell"]
+    except FileNotFoundError:
+        # Если файл отсутствует, загружаем из переменной окружения
+        token = os.getenv("TOKEN_tell")
+        if not token:
+            raise ValueError("Токен не найден: отсутствует файл secrets.toml и переменная окружения TOKEN_tell")
+        return token
 
 # Токен для бота
 TOKEN = load_token()
