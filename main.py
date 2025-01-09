@@ -102,7 +102,7 @@ async def handle_nickname(update: Update, context: CallbackContext):
 
         # Переход на следующий этап
         context.user_data['state'] = 'enter_competencies'
-        await update.message.reply_text("Ваш ник успешно зарегистрирован! Теперь введите ваши компетенции: перечислите их через запятую: (например: python, LLM, UI\UX, боты)")
+        await update.message.reply_text("Ваш ник успешно зарегистрирован! Теперь введите ваши компетенции: перечислите их через запятую: (например: python, LLM, UI/UX, боты)")
     else:
         await update.message.reply_text("Нажмите /start, чтобы начать.")
 
@@ -153,28 +153,6 @@ async def handle_preferred_time(update: Update, context: CallbackContext):
     await update.message.reply_text(
         "Введите ваш GitHub (или отправьте любой символ, чтобы пропустить):"
     )
-
-
-async def handle_nickname(update: Update, context: CallbackContext):
-    if context.user_data.get('state') == 'enter_nickname':
-        user_id = update.effective_user.id
-        nickname = update.message.text.strip()  # Убираем лишние пробелы
-
-        if not nickname:  # Проверка обязательного поля
-            await update.message.reply_text("Никнейм обязателен. Пожалуйста, введите ваш никнейм:")
-            return
-
-        # Проверка на наличие @
-        if not nickname.startswith('@'):
-            nickname = '@' + nickname
-
-        context.user_data['nickname'] = nickname  # Сохраняем никнейм во временное хранилище
-
-        # Переход на следующий этап
-        context.user_data['state'] = 'enter_competencies'
-        await update.message.reply_text(r"Ваш ник успешно зарегистрирован! Теперь введите ваши компетенции: перечислите их через запятую: (например: python, LLM, UI/UX, боты)")
-    else:
-        await update.message.reply_text("Нажмите /start, чтобы начать.")
 
 
 async def handle_github(update: Update, context: CallbackContext):
