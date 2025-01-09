@@ -25,7 +25,8 @@ async def start(update: Update, context: CallbackContext):
             f"Привет, {user.first_name}! \n\n"
             "Добро пожаловать в бота волонтеров IT! 🌊 Мы боремся с последствиями разлива нефтепродуктов в Черном море у берегов Анапы. "
             "Наша миссия — спасение морской флоры и фауны, очистка побережья от мазута и поддержка экологической команды. "
-            "Каждый волонтер важен!🛟 Спасибо за вашу помощь природе! 🌿\n\n"
+            "Каждый волонтер важен!🛟 Спасибо за вашу помощь природе! 🌿\n"
+            "Предупреждаем, что будет осуществлятся сбор ваших данных, которые будут использоваться только в рамках данного проекта\n\n"
             "Если вы хотите зарегистрироваться, нажмите кнопку ниже.💻"
         ),
         reply_markup=InlineKeyboardMarkup([
@@ -47,7 +48,7 @@ async def register_callback(update: Update, context: CallbackContext):
         print(f"Ошибка при скрытии кнопок: {e}")
 
     # Отправляем новое сообщение
-    await query.message.reply_text("Давайте начнем! Введите ваш ник в Telegram:")
+    await query.message.reply_text("Давайте начнем! Введите ваш ник в Telegram: (пример: @acd84)")
     context.user_data['state'] = 'enter_nickname'
 
 
@@ -67,6 +68,13 @@ async def cancel_callback(update: Update, context: CallbackContext):
     await query.message.reply_text("Регистрация отменена. Если вы передумаете, нажмите /start.")
 
 
+def handle_optional_field(text):
+    # Если пустое или один символ, возвращаем None
+    if len(text.strip()) <= 1:
+        return None
+    return text.strip()
+
+
 # Обработчик ввода ника
 async def handle_nickname(update: Update, context: CallbackContext):
     if context.user_data.get('state') == 'enter_nickname':
@@ -77,11 +85,15 @@ async def handle_nickname(update: Update, context: CallbackContext):
             await update.message.reply_text("Никнейм обязателен. Пожалуйста, введите ваш никнейм:")
             return
 
+        # Проверка на наличие @
+        if not nickname.startswith('@'):
+            nickname = '@' + nickname
+
         context.user_data['nickname'] = nickname  # Сохраняем никнейм во временное хранилище
 
         # Переход на следующий этап
         context.user_data['state'] = 'enter_competencies'
-        await update.message.reply_text("Ваш ник успешно зарегистрирован! Теперь введите ваши компетенции:")
+        await update.message.reply_text("Ваш ник успешно зарегистрирован! Теперь введите ваши компетенции: перечислите их через запятую: (например: python, LLM, UI\UX, боты)")
     else:
         await update.message.reply_text("Нажмите /start, чтобы начать.")
 
@@ -96,7 +108,7 @@ async def handle_competencies(update: Update, context: CallbackContext):
 
     context.user_data['competencies'] = text
     context.user_data['state'] = 'enter_roles'
-    await update.message.reply_text("Выберите вашу роль из списка (например, Frontend, Backend, Дизайн):")
+    await update.message.reply_text("Выберите вашу роль (из списка: Project Management, Дизайн, Текст, SMM, DevOps, Frontend, Backend, Чат боты, Тестирование, Аналитика, Данные, Помощник, LLM, ChatGPT, Нейросети, AI, HR, Фактчекер, Маркетолог, Журналист, Midjourney, Модератор, ML, QGIS, Аудио, саунд-дизайн):")
 
 
 async def handle_roles(update: Update, context: CallbackContext):
@@ -109,45 +121,74 @@ async def handle_roles(update: Update, context: CallbackContext):
     context.user_data['roles'] = text
     context.user_data['state'] = 'enter_timezone'
     await update.message.reply_text(
-        "Укажите ваш часовой пояс (например, +3). Если хотите пропустить, отправьте пустое сообщение:"
+        "Укажите ваш часовой пояс относительно МСК (например, +3). Если хотите пропустить, отправьте любой символ кроме цифр:"
     )
 
 
 async def handle_timezone(update: Update, context: CallbackContext):
     text = update.message.text.strip()
 
-    context.user_data['timezone'] = text if text else None
+    context.user_data['timezone'] = handle_optional_field(text)
     context.user_data['state'] = 'enter_preferred_time'
     await update.message.reply_text(
         "Укажите предпочтительное время (например, ПН-ПТ, 4 часа, 10:00-18:00). "
-        "Если хотите пропустить, отправьте пустое сообщение:"
+        "Если хотите пропустить, отправьте любой символ:"
     )
 
 
 async def handle_preferred_time(update: Update, context: CallbackContext):
     text = update.message.text.strip()
 
-    context.user_data['preferred_time'] = text if text else None
+    context.user_data['timezone'] = handle_optional_field(text)
     context.user_data['state'] = 'enter_github'
     await update.message.reply_text(
-        "Введите ваш GitHub (или отправьте пустое сообщение, чтобы пропустить):"
+        "Введите ваш GitHub (или отправьте любой символ, чтобы пропустить):"
     )
+
+
+async def handle_nickname(update: Update, context: CallbackContext):
+    if context.user_data.get('state') == 'enter_nickname':
+        user_id = update.effective_user.id
+        nickname = update.message.text.strip()  # Убираем лишние пробелы
+
+        if not nickname:  # Проверка обязательного поля
+            await update.message.reply_text("Никнейм обязателен. Пожалуйста, введите ваш никнейм:")
+            return
+
+        # Проверка на наличие @
+        if not nickname.startswith('@'):
+            nickname = '@' + nickname
+
+        context.user_data['nickname'] = nickname  # Сохраняем никнейм во временное хранилище
+
+        # Переход на следующий этап
+        context.user_data['state'] = 'enter_competencies'
+        await update.message.reply_text(r"Ваш ник успешно зарегистрирован! Теперь введите ваши компетенции: перечислите их через запятую: (например: python, LLM, UI/UX, боты)")
+    else:
+        await update.message.reply_text("Нажмите /start, чтобы начать.")
 
 
 async def handle_github(update: Update, context: CallbackContext):
     text = update.message.text.strip()
 
-    context.user_data['github'] = text if text else None
+    # Если пустое или один символ, считаем, что поле пропущено
+    if len(text) <= 1:
+        context.user_data['github'] = None
+    else:
+        # Проверка на наличие @
+        if not text.startswith('@'):
+            text = '@' + text
+        context.user_data['github'] = text
+
     context.user_data['state'] = 'enter_additional_data'
-    await update.message.reply_text(
-        "Введите дополнительные данные (или отправьте пустое сообщение, чтобы пропустить):"
-    )
+    await update.message.reply_text("Введите дополнительные данные (или отправьте любой символ, чтобы пропустить):")
+
 
 
 async def handle_additional_data(update: Update, context: CallbackContext):
     text = update.message.text.strip()
 
-    context.user_data['additional_data'] = text if text else None
+    context.user_data['additional_data'] = handle_optional_field(text)
 
     # Сохранение данных в базу
     try:
@@ -156,7 +197,7 @@ async def handle_additional_data(update: Update, context: CallbackContext):
             nickname=context.user_data['nickname'],
             competencies=context.user_data['competencies'],
             roles=context.user_data['roles'],
-            tracker_access=True,  # Предполагаем, что доступ к трекеру есть
+            tracker_access=True,  
             timezone=context.user_data.get('timezone'),
             preferred_time=context.user_data.get('preferred_time'),
             github=context.user_data.get('github'),
