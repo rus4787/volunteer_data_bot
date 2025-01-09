@@ -229,6 +229,9 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_user_input))
     app.add_error_handler(error_handler)
 
+    print("Current working directory:", os.getcwd())
+    print("Contents:", os.listdir("."))
+    
     # Запускаем бота
     print("Бот запущен!")
     app.run_polling()
