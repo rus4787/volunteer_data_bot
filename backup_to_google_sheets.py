@@ -20,7 +20,7 @@ try:
     client = gspread.authorize(credentials)
 
     # Открываем Google Sheet
-    sheet = client.open("Volunteer Database Backup").sheet1
+    sheet = client.open_by_key("1_3ST2jprIGxACQE6Q0C8hMdQOy-6cZdb9bZkK--BgVU").sheet1
 
     # Подключение к SQLite
     conn = sqlite3.connect("volunteers.db")
